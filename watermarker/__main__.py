@@ -25,6 +25,15 @@ if __name__ == "__main__":
         dest="watermark_text",
     )
 
+    parser.add_argument(
+        "-q",
+        "--quality",
+        required=False,
+        help="Quality conversion",
+        dest="quality",
+        default=20
+    )
+
     args = parser.parse_args()
 
     matched_files = []
@@ -34,6 +43,7 @@ if __name__ == "__main__":
             matched_files.extend(glob.glob(file))
         else:
             matched_files.append(file)
+    quality_jpg = int(args.quality)
     watermark_text = args.watermark_text
     watermark_text += "\n"
     watermark_pdf = FPDF()
@@ -90,7 +100,7 @@ if __name__ == "__main__":
             pdf_marked_name = re.sub(
                 r"^(.*)\/(.*).pdf$", r"\1/\2-marked.pdf", input_pdf_path
             )
-            imgs[0].save(pdf_marked_name, save_all=True, append_images=imgs)
+            imgs[0].save(pdf_marked_name, save_all=True, append_images=imgs[1::], quality=quality_jpg)
             print(" -> Removing watermarked PDF files :")
             print(f"    -> {inter_watermarked_pdf_path}")
 
