@@ -54,8 +54,6 @@ if __name__ == "__main__":
     convert_bw = args.bw
     watermark_text = args.watermark_text
 
-
-
     for file in matched_files:
         print(f"Processing {file}...")
         if not "marked" in file:
@@ -63,10 +61,8 @@ if __name__ == "__main__":
 
             print(" -> Extracting pdf to JPG")
             images = convert_from_path(input_pdf_path)
-            jpg_files = []
+            watermarked_pages = []
             for i in range(len(images)):
-                output_jpg = f"{os.getcwd()}/.{i}.jpg"
-                jpg_files.append(output_jpg)
                 watermark_jpg = Image.new('RGBA', images[i].size, (255,255,255,0))
                 draw = ImageDraw.Draw(watermark_jpg)
                 font = ImageFont.truetype("/Library/Fonts/Arial Unicode.ttf", 50)
@@ -76,25 +72,16 @@ if __name__ == "__main__":
                     x=random.randint(0, width-300)
                     y+=random.randrange(0,int(height/8), 19)+random.randint(0,100)
                     draw.text((x,y), watermark_text, fill=(0,0,0, 255), font=font)
-
-                #Combining both layers and saving new image
-                
+                                  
                 watermarked = Image.alpha_composite(images[i].convert("RGBA"), watermark_jpg)
-                watermarked_jpg = watermarked.convert("RGB")
                 if convert_bw:
-                    watermarked.convert("L")
-                # imgs.append(watermarked_img)
-                watermarked_jpg.save(output_jpg)
-                print(f"    ->{output_jpg}")
-
+                     watermarked_pages.append(watermarked.convert("L"))
+                else:
+                    watermarked_pages.append(watermarked.convert("RGB"))
+            
             print(" -> Merge jpg to final PDF")
-            imgs = []
-            for jpg_file in jpg_files:
-                imgs.append(Image.open(jpg_file))
             pdf_marked_name = re.sub(
                 r"^(.*)\/(.*).pdf$", r"\1/\2-marked.pdf", input_pdf_path
             )
-            imgs[0].save(pdf_marked_name, save_all=True, append_images=imgs[1::], quality=quality_jpg)
+            watermarked_pages[0].save(pdf_marked_name, save_all=True, append_images=watermarked_pages[1::], quality=quality_jpg)
             print(" -> Removing jpg files")
-            for i in jpg_files:
-                os.remove(i)
