@@ -71,13 +71,13 @@ if __name__ == "__main__":
                 jpg_files.append(output_jpg)
                 watermark_jpg = Image.new('RGBA', images[i].size, (255,255,255,0))
                 draw = ImageDraw.Draw(watermark_jpg)
-                font = ImageFont.truetype(f"{os.path.dirname(os.path.realpath(__file__))}../Arial.ttf", 50)
+                font = ImageFont.truetype("/Library/Fonts/Arial Unicode.ttf", 50)
                 width, height = images[i].size 
                 y=200
-                for j in range(7):
+                for j in range(14):
                     x=random.randint(0, width-300)
                     y+=random.randrange(0,int(height/8), 19)+random.randint(0,100)
-                    draw.text((x,y), watermark_text, fill=(255,255,255, 0), font=font)
+                    draw.text((x,y), watermark_text, fill=(0,0,0, 255), font=font)
 
                 #Combining both layers and saving new image
                 
@@ -88,8 +88,6 @@ if __name__ == "__main__":
                 # imgs.append(watermarked_img)
                 watermarked_jpg.save(output_jpg)
                 print(f"    ->{output_jpg}")
-                exit(0)
-            exit(0)
 
             print(" -> Merge jpg to final PDF")
             imgs = []
@@ -99,12 +97,6 @@ if __name__ == "__main__":
                 r"^(.*)\/(.*).pdf$", r"\1/\2-marked.pdf", input_pdf_path
             )
             imgs[0].save(pdf_marked_name, save_all=True, append_images=imgs[1::], quality=quality_jpg)
-            print(" -> Removing watermarked PDF files :")
-            print(f"    -> {inter_watermarked_pdf_path}")
-
-            os.remove(inter_watermarked_pdf_path)
             print(" -> Removing jpg files")
             for i in jpg_files:
                 os.remove(i)
-
-    os.remove(f"{os.getcwd()}/.watermark.pdf")
