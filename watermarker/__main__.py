@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-from PyPDF2 import PdfFileMerger, PdfReader, PdfWriter
-from fpdf import FPDF
 from pdf2image import convert_from_path
 from PIL import Image, ImageDraw, ImageFont
 import argparse, os, re, glob, random
