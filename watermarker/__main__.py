@@ -3,8 +3,8 @@
 from PyPDF2 import PdfFileMerger, PdfReader, PdfWriter
 from fpdf import FPDF
 from pdf2image import convert_from_path
-from PIL import Image
-import argparse, os, re, glob
+from PIL import Image, ImageDraw, ImageFont
+import argparse, os, re, glob, random
 
 if __name__ == "__main__":
 
@@ -33,65 +33,63 @@ if __name__ == "__main__":
         dest="quality",
         default=20
     )
+    
+    parser.add_argument(
+        "-bw",
+        "--black-n-white",
+        required=False,
+        help="Convert to B&W",
+        dest="bw",
+        default=False
+    )
+
 
     args = parser.parse_args()
 
     matched_files = []
     for file in args.input:
         if glob.escape(file) != file:
-            # -> There are glob pattern chars in the string
             matched_files.extend(glob.glob(file))
         else:
             matched_files.append(file)
     quality_jpg = int(args.quality)
+    convert_bw = args.bw
     watermark_text = args.watermark_text
-    watermark_text += "\n"
-    watermark_pdf = FPDF()
-    watermark_pdf.add_page()
-    watermark_pdf.set_font("Arial", size=50)
-    watermark_pdf.rotate(angle=45)
-    watermark_pdf.set_xy(-500, 180)
-    watermark_pdf.multi_cell(200, 15, txt=watermark_text, align="C")
-    watermark_pdf.set_xy(-300, 50)
-    watermark_pdf.multi_cell(200, 15, txt=watermark_text, align="C")
-    watermark_pdf.set_xy(-300, 170)
-    watermark_pdf.multi_cell(200, 15, txt=watermark_text, align="C")
 
-    watermark_pdf.output(".watermark.pdf")
+
 
     for file in matched_files:
         print(f"Processing {file}...")
         if not "marked" in file:
             input_pdf_path = f"{os.getcwd()}/{file}"
-            inter_watermarked_pdf_path = re.sub(
-                r"^(.*)\/(.*)\.pdf$", r"\1/.\2_marked.pdf", input_pdf_path
-            )
-            print("     -> Generating watermarked PDF")
-            with open(input_pdf_path, "rb") as input_file, open(
-                f"{os.getcwd()}/.watermark.pdf", "rb"
-            ) as watermark_file:
-                input_pdf = PdfReader(input_file)
-                watermark_pdf = PdfReader(watermark_file)
-                watermark_page = watermark_pdf.pages[0]
-                output = PdfWriter()
-
-                print("     -> Applying watermark to PDF")
-                for i in range(len(input_pdf.pages)):
-                    pdf_page = input_pdf.pages[i]
-                    pdf_page.merge_page(watermark_page)
-                    output.add_page(pdf_page)
-
-                with open(inter_watermarked_pdf_path, "wb") as merged_file:
-                    output.write(merged_file)
 
             print(" -> Extracting pdf to JPG")
-            images = convert_from_path(inter_watermarked_pdf_path)
+            images = convert_from_path(input_pdf_path)
             jpg_files = []
             for i in range(len(images)):
                 output_jpg = f"{os.getcwd()}/.{i}.jpg"
                 jpg_files.append(output_jpg)
-                images[i].save(output_jpg)
+                watermark_jpg = Image.new('RGBA', images[i].size, (255,255,255,0))
+                draw = ImageDraw.Draw(watermark_jpg)
+                font = ImageFont.truetype(f"{os.path.dirname(os.path.realpath(__file__))}../Arial.ttf", 50)
+                width, height = images[i].size 
+                y=200
+                for j in range(7):
+                    x=random.randint(0, width-300)
+                    y+=random.randrange(0,int(height/8), 19)+random.randint(0,100)
+                    draw.text((x,y), watermark_text, fill=(255,255,255, 0), font=font)
+
+                #Combining both layers and saving new image
+                
+                watermarked = Image.alpha_composite(images[i].convert("RGBA"), watermark_jpg)
+                watermarked_jpg = watermarked.convert("RGB")
+                if convert_bw:
+                    watermarked.convert("L")
+                # imgs.append(watermarked_img)
+                watermarked_jpg.save(output_jpg)
                 print(f"    ->{output_jpg}")
+                exit(0)
+            exit(0)
 
             print(" -> Merge jpg to final PDF")
             imgs = []
